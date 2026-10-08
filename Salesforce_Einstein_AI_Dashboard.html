@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salesforce Einstein AI - Sales Automation & Forecasting Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Khmer:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        salesforce: {
+                            blue: '#0176D3', darkBlue: '#032D60', lightBg: '#F3F5F9',
+                            cardBg: '#FFFFFF', accent: '#1B96FF', purple: '#7F56D9',
+                            success: '#2E844A', warning: '#FE9339', danger: '#EA001E'
+                        }
+                    },
+                    fontFamily: { sans: ['Noto Sans Khmer', 'Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Noto Sans Khmer', 'Inter', sans-serif; background-color: #F3F5F9; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        #sidebar { transition: margin-left .3s; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-72 bg-salesforce-darkBlue text-white flex flex-col justify-between z-30 shrink-0 overflow-y-auto custom-scrollbar">
+        <div>
+            <div class="p-4 flex items-center gap-3 border-b border-slate-700/50">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-500 to-indigo-400 flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                    <i class="fa-solid fa-brain"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base leading-tight">Einstein AI</h1>
+                    <p class="text-xs text-blue-300">Sales Automation</p>
+                </div>
+            </div>
+
+            <nav class="mt-4 px-3 space-y-1">
+                <a href="#" onclick="switchTab('dashboard');return false;" id="nav-dashboard" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-salesforce-blue text-white transition-all">
+                    <i class="fa-solid fa-chart-pie w-5 text-center"></i><span>ទិដ្ឋភាពទូទៅ (Overview)</span>
+                </a>
+
+                <a href="#" onclick="switchTab('data-integration');return false;" id="nav-data-integration" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+                    <i class="fa-solid fa-database w-5 text-center"></i><span>ការប្រមូលទិន្នន័យ (Integration)</span>
+                </a>
+                <a href="#" onclick="switchTab('ml-analysis');return false;" id="nav-ml-analysis" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+                    <i class="fa-solid fa-microchip w-5 text-center"></i><span>ការរៀនសូត្រ (Machine Learning)</span>
+                </a>
+
+                <a href="#" onclick="switchTab('activity-capture');return false;" id="nav-activity-capture" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+                    <i class="fa-solid fa-bolt w-5 text-center"></i><span>កំណត់ត្រាស្វ័យប្រវត្តិ (Activity)</span>
+                </a>
+                <a href="#" onclick="switchTab('lead-scoring');return false;" id="nav-lead-scoring" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+                    <i class="fa-solid fa-user-check w-5 text-center"></i><span>ពិន្ទុអតិថិជន (Lead Scoring)</span>
+                </a>
+
+                <a href="#" onclick="switchTab('forecasting');return false;" id="nav-forecasting" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+                    <i class="fa-solid fa-chart-line w-5 text-center"></i><span>ទស្សន៍ទាយការលក់ (Forecasting)</span>
+                </a>
+                <a href="#" onclick="switchTab('opportunity-insights');return false;" id="nav-opportunity-insights" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+                    <i class="fa-solid fa-triangle-exclamation w-5 text-center"></i><span>ការព្រមាន (Opportunity Insights)</span>
+                    <span id="risk-badge" class="ml-auto text-[10px] bg-red-500 text-white rounded-full px-1.5 py-0.5">0</span>
+                </a>
+
+                <a href="#" onclick="switchTab('next-action');return false;" id="nav-next-action" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+                    <i class="fa-solid fa-wand-magic-sparkles w-5 text-center"></i><span>សកម្មភាពណែនាំ (Next-Best)</span>
+                </a>
+
+                <a href="#" onclick="switchTab('orders');return false;" id="nav-orders" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+                    <i class="fa-solid fa-receipt w-5 text-center"></i><span>ការបញ្ជាទិញ (Owner Orders)</span>
+                    <span id="order-badge" class="ml-auto text-[10px] bg-emerald-500 text-white rounded-full px-1.5 py-0.5">0</span>
+                </a>
+                <a href="#" onclick="switchTab('store');return false;" id="nav-store" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+                    <i class="fa-solid fa-cart-shopping w-5 text-center"></i><span>ហាងអតិថិជន (Customer Store)</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-slate-700/50 bg-slate-900/40 m-3 rounded-xl">
+            <div class="flex items-center justify-between text-xs mb-2">
+                <span class="text-slate-400">ស្ថានភាព AI (AI Model)</span>
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> សកម្ម (Active)
+                </span>
+            </div>
+            <p class="text-xs text-slate-300 font-semibold truncate">Einstein v4.2 Predictive Engine</p>
+            <p class="text-[10px] text-slate-400 mt-1">ធ្វើបច្ចុប្បន្នភាពចុងក្រោយ: ទើបតែឥឡូវ</p>
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="flex-1 flex flex-col h-full overflow-hidden">
+        <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0 shadow-sm z-20">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="text-slate-500 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+                <h2 id="page-title" class="text-xl font-bold text-slate-800">ផ្ទាំងគ្រប់គ្រង Salesforce Einstein AI</h2>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="runAiPrediction()" class="inline-flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3.5 py-2 rounded-lg text-xs font-semibold border border-indigo-200 transition-all shadow-sm">
+                    <i class="fa-solid fa-rotate text-indigo-600"></i><span>ដំណើរការ AI វិភាគ (Run AI Scan)</span>
+                </button>
+                <button onclick="simulateNewLead()" class="inline-flex items-center gap-2 bg-salesforce-blue hover:bg-blue-700 text-white px-3.5 py-2 rounded-lg text-xs font-semibold transition-all shadow-sm">
+                    <i class="fa-solid fa-plus"></i><span>បន្ថែម Lead ថ្មី (Simulate Lead)</span>
+                </button>
+                <div class="relative">
+                    <button class="p-2 text-slate-500 hover:text-slate-700 rounded-lg hover:bg-slate-100 relative">
+                        <i class="fa-regular fa-bell text-lg"></i>
+                        <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500"></span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-50">
+            <div id="toast-container" class="fixed top-20 right-6 z-50 flex flex-col gap-2 max-w-md pointer-events-none"></div>
+
+            <!-- ===== VIEW: OVERVIEW ===== -->
+            <div id="tab-dashboard" class="tab-content space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">ការលក់ដែលរំពឹងទុក (Forecast)</span>
+                            <div class="w-8 h-8 rounded-lg bg-blue-50 text-salesforce-blue flex items-center justify-center"><i class="fa-solid fa-sack-dollar"></i></div>
+                        </div>
+                        <div class="mt-3">
+                            <h3 class="text-2xl font-bold text-slate-800">$184,500</h3>
+                            <p class="text-xs text-emerald-600 flex items-center gap-1 mt-1 font-medium"><i class="fa-solid fa-arrow-up"></i> +14.2% ធៀបនឹងត្រីមាសមុន</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">ពិន្ទុ AI មធ្យម (Avg Lead Score)</span>
+                            <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center"><i class="fa-solid fa-star"></i></div>
+                        </div>
+                        <div class="mt-3">
+                            <h3 class="text-2xl font-bold text-slate-800" id="avg-score">82 / 100</h3>
+                            <p class="text-xs text-emerald-600 flex items-center gap-1 mt-1 font-medium"><i class="fa-solid fa-arrow-up"></i> +5.8% គុណភាព Lead កើនឡើង</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">អត្រាជោគជ័យ (Win Rate)</span>
+                            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><i class="fa-solid fa-trophy"></i></div>
+                        </div>
+                        <div class="mt-3">
+                            <h3 class="text-2xl font-bold text-slate-800">68.4%</h3>
+                            <p class="text-xs text-slate-500 mt-1 font-medium">ផ្អែកលើការវិភាគ AI ចំនួន 42 Deals</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">សកម្មភាពស្វ័យប្រវត្តិ (Auto Logged)</span>
+                            <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center"><i class="fa-solid fa-bolt"></i></div>
+                        </div>
+                        <div class="mt-3">
+                            <h3 id="auto-logged" class="text-2xl font-bold text-slate-800">1,248</h3>
+                            <p class="text-xs text-slate-500 mt-1 font-medium">អ៊ីមែល & ការណាត់ជួបត្រូវបានកត់ត្រា</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-base">ការប្រៀបធៀបការលក់ជាក់ស្តែង និងការទស្សន៍ទាយ AI (Sales Forecast)</h3>
+                                <p class="text-xs text-slate-500">របាយការណ៍ប្រចាំខែ មករា - មិថុនា</p>
+                            </div>
+                            <select id="forecast-filter" onchange="updateForecastChart()" class="text-xs bg-slate-100 border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-salesforce-blue">
+                                <option value="all">គ្រប់ប្រូបាប៊ីលីតេ (All Win Probability)</option>
+                                <option value="high">ប្រូបាប៊ីលីតេខ្ពស់ (> 75%)</option>
+                                <option value="medium">ប្រូបាប៊ីលីតេមធ្យម (50% - 75%)</option>
+                            </select>
+                        </div>
+                        <div class="h-72 relative"><canvas id="salesForecastChart"></canvas></div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 rounded-xl shadow-md flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> AI Recommendation
+                                </span>
+                                <span class="text-xs text-slate-400">ទើបផ្ដល់អនុសាសន៍</span>
+                            </div>
+                            <h4 class="font-bold text-lg text-white mb-2">ឱកាសបិទការលក់ជាមួយ ABA Bank!</h4>
+                            <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                                Einstein AI រកឃើញថា ABA Bank មានអត្រាឆ្លើយតបអ៊ីមែលខ្ពស់រហូតដល់ 89%។ ប្រព័ន្ធណែនាំឱ្យផ្ញើ <strong>"លិខិតស្នើបញ្ចុះតម្លៃ 10%"</strong> ឥឡូវនេះដើម្បីបិទការលក់នៅក្នុងសប្តាហ៍នេះ។
+                            </p>
+                        </div>
+                        <div class="space-y-2 pt-4 border-t border-slate-700">
+                            <button onclick="executeAction('send-discount')" class="w-full bg-salesforce-blue hover:bg-blue-600 text-white text-xs font-semibold py-2.5 px-4 rounded-lg transition-all flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-paper-plane"></i> ផ្ញើលិខិតស្នើបញ្ចុះតម្លៃភ្លាមៗ
+                            </button>
+                            <button onclick="executeAction('snooze-action')" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium py-2 px-4 rounded-lg transition-all text-center">
+                                រំលឹកខ្ញុំពេលក្រោយ (Remind Me Later)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-base">អតិថិជនសក្តានុពលខ្ពស់ (Top AI Scored Leads)</h3>
+                            <p class="text-xs text-slate-500">តម្រៀបតាមពិន្ទុ AI និងកត្តាហានិភ័យ</p>
+                        </div>
+                        <button onclick="switchTab('lead-scoring')" class="text-xs font-semibold text-salesforce-blue hover:underline">មើលទាំងអស់ <i class="fa-solid fa-chevron-right ml-1"></i></button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-200">
+                                    <th class="py-3.5 px-4">ឈ្មោះអតិថិជន / ក្រុមហ៊ុន</th>
+                                    <th class="py-3.5 px-4">ពិន្ទុ AI Score</th>
+                                    <th class="py-3.5 px-4">កត្តាជំរុញជោគជ័យ (Key Driver)</th>
+                                    <th class="py-3.5 px-4">កត្តាប្រឈម (Risk Factor)</th>
+                                    <th class="py-3.5 px-4 text-right">សកម្មភាព</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboard-lead-table-body" class="text-sm divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== VIEW: DATA INTEGRATION ===== -->
+            <div id="tab-data-integration" class="tab-content hidden space-y-6">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-2">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">ការប្រមូល និងភ្ជាប់ទិន្នន័យ (Data Collection & Integration)</h3>
+                            <p class="text-xs text-slate-500">Einstein AI ទាញយកទិន្នន័យដោយស្វ័យប្រវត្តិពីប្រព័ន្ធ Salesforce CRM និងប្រភពផ្សេងៗ</p>
+                        </div>
+                        <button onclick="syncAllSources()" class="inline-flex items-center gap-2 bg-salesforce-blue hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-sm">
+                            <i class="fa-solid fa-arrows-rotate"></i> ធ្វើសមកាលកម្មទាំងអស់ (Sync All)
+                        </button>
+                    </div>
+
+                    <!-- Pipeline flow -->
+                    <div class="my-6 flex flex-col md:flex-row items-stretch gap-3 text-xs">
+                        <div class="flex-1 rounded-xl border border-slate-200 bg-slate-50 p-3 text-center"><i class="fa-solid fa-database text-salesforce-blue text-lg"></i><p class="font-semibold mt-1">១. ប្រមូលទិន្នន័យ</p><p class="text-slate-500">CRM · Email · Calendar</p></div>
+                        <div class="hidden md:flex items-center text-slate-400"><i class="fa-solid fa-chevron-right"></i></div>
+                        <div class="flex-1 rounded-xl border border-slate-200 bg-slate-50 p-3 text-center"><i class="fa-solid fa-filter text-purple-600 text-lg"></i><p class="font-semibold mt-1">២. សម្អាត & បញ្ចូលគ្នា</p><p class="text-slate-500">Dedupe · Normalize</p></div>
+                        <div class="hidden md:flex items-center text-slate-400"><i class="fa-solid fa-chevron-right"></i></div>
+                        <div class="flex-1 rounded-xl border border-slate-200 bg-slate-50 p-3 text-center"><i class="fa-solid fa-microchip text-emerald-600 text-lg"></i><p class="font-semibold mt-1">៣. Machine Learning</p><p class="text-slate-500">Pattern Detection</p></div>
+                        <div class="hidden md:flex items-center text-slate-400"><i class="fa-solid fa-chevron-right"></i></div>
+                        <div class="flex-1 rounded-xl border border-slate-200 bg-slate-50 p-3 text-center"><i class="fa-solid fa-lightbulb text-amber-500 text-lg"></i><p class="font-semibold mt-1">៤. Insights & Actions</p><p class="text-slate-500">Score · Forecast · Next-Best</p></div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="p-4 rounded-xl bg-blue-50 border border-blue-100"><span class="text-xs font-semibold text-salesforce-blue">កំណត់ត្រាសរុប</span><h4 id="total-records" class="text-xl font-bold text-salesforce-blue mt-1">0</h4></div>
+                        <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-100"><span class="text-xs font-semibold text-emerald-700">ប្រភពភ្ជាប់រួច</span><h4 id="connected-count" class="text-xl font-bold text-emerald-700 mt-1">0</h4></div>
+                        <div class="p-4 rounded-xl bg-amber-50 border border-amber-100"><span class="text-xs font-semibold text-amber-700">គុណភាពទិន្នន័យ</span><h4 id="data-quality" class="text-xl font-bold text-amber-700 mt-1">96%</h4></div>
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200"><span class="text-xs font-semibold text-slate-600">ធ្វើសមកាលកម្មចុងក្រោយ</span><h4 id="last-sync-all" class="text-xl font-bold text-slate-700 mt-1">—</h4></div>
+                    </div>
+
+                    <div id="data-sources" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+                </div>
+            </div>
+
+            <!-- ===== VIEW: ML ANALYSIS ===== -->
+            <div id="tab-ml-analysis" class="tab-content hidden space-y-6">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">ការវិភាគ និងរៀនសូត្រពីទិន្នន័យ (Machine Learning & Data Processing)</h3>
+                            <p class="text-xs text-slate-500">AI វិភាគលំនាំ (Patterns) ក្នុងប្រវត្តិលក់ ដើម្បីដឹងកត្តាដែលនាំឱ្យការលក់ជោគជ័យ ឬបរាជ័យ</p>
+                        </div>
+                        <button id="retrain-btn" onclick="retrainModel()" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-sm">
+                            <i class="fa-solid fa-graduation-cap"></i> បង្រៀនម៉ូដែលឡើងវិញ (Retrain)
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div class="p-4 rounded-xl bg-indigo-50 border border-indigo-100"><span class="text-xs font-semibold text-indigo-700">ភាពត្រឹមត្រូវម៉ូដែល (Accuracy)</span><h4 id="ml-accuracy" class="text-xl font-bold text-indigo-700 mt-1">87.6%</h4></div>
+                        <div class="p-4 rounded-xl bg-blue-50 border border-blue-100"><span class="text-xs font-semibold text-salesforce-blue">Deals ប្រើក្នុងការបង្រៀន</span><h4 id="ml-deals" class="text-xl font-bold text-salesforce-blue mt-1">12,480</h4></div>
+                        <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-100"><span class="text-xs font-semibold text-emerald-700">កត្តាដែលរកឃើញ</span><h4 class="text-xl font-bold text-emerald-700 mt-1">8</h4></div>
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200"><span class="text-xs font-semibold text-slate-600">បង្រៀនចុងក្រោយ</span><h4 id="ml-trained" class="text-xl font-bold text-slate-700 mt-1">ថ្ងៃនេះ</h4></div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2">
+                            <h4 class="font-bold text-sm text-slate-800 mb-1">កត្តាជំរុញជោគជ័យ និងបរាជ័យ (Win / Loss Drivers)</h4>
+                            <p class="text-xs text-slate-500 mb-3">ផលប៉ះពាល់លើប្រូបាប៊ីលីតេបិទការលក់ (ភាគរយ)</p>
+                            <div class="h-80 relative"><canvas id="factorChart"></canvas></div>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm text-slate-800 mb-3">លំនាំដែលរកឃើញ (Detected Patterns)</h4>
+                            <div class="space-y-3 text-xs">
+                                <div class="p-3 rounded-lg bg-emerald-50 border border-emerald-200"><p class="font-semibold text-emerald-800"><i class="fa-solid fa-circle-check mr-1"></i> ឆ្លើយតបអ៊ីមែលក្នុង ២៤ ម៉ោង</p><p class="text-emerald-700 mt-1">Deals ប្រភេទនេះបិទបានច្រើនជាង ២.៣ ដង</p></div>
+                                <div class="p-3 rounded-lg bg-emerald-50 border border-emerald-200"><p class="font-semibold text-emerald-800"><i class="fa-solid fa-circle-check mr-1"></i> ចូលរួម Demo ច្រើនជាង ២ ដង</p><p class="text-emerald-700 mt-1">អត្រាជោគជ័យកើនដល់ ៧៨%</p></div>
+                                <div class="p-3 rounded-lg bg-rose-50 border border-rose-200"><p class="font-semibold text-rose-800"><i class="fa-solid fa-circle-xmark mr-1"></i> ស្ងាត់ជាង ៧ ថ្ងៃ</p><p class="text-rose-700 mt-1">ប្រូបាប៊ីលីតេបាត់បង់កើនឡើង ២៩%</p></div>
+                                <div class="p-3 rounded-lg bg-rose-50 border border-rose-200"><p class="font-semibold text-rose-800"><i class="fa-solid fa-circle-xmark mr-1"></i> មានគូប្រជែងក្នុងដំណើរការ</p><p class="text-rose-700 mt-1">ប្រូបាប៊ីលីតេបាត់បង់កើនឡើង ២២%</p></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== VIEW: LEAD SCORING ===== -->
+            <div id="tab-lead-scoring" class="tab-content hidden space-y-6">
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">ប្រព័ន្ធផ្តល់ពិន្ទុអតិថិជន (Einstein Lead Scoring)</h3>
+                            <p class="text-xs text-slate-500">វាយតម្លៃ និងតម្រៀបអតិថិជន ដើម្បីដឹងថាគួរផ្តោតលើនរណាដែលងាយនឹងទិញមុនគេ</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <select id="lead-sort" onchange="filterLeads()" class="text-xs border border-slate-300 rounded-lg px-2 py-2">
+                                <option value="score">តម្រៀបតាមពិន្ទុ</option>
+                                <option value="value">តម្រៀបតាមទំហំកិច្ចសន្យា</option>
+                            </select>
+                            <input type="text" id="lead-search" oninput="filterLeads()" placeholder="ស្វែងរកតាមឈ្មោះ ឬក្រុមហ៊ុន..." class="text-xs border border-slate-300 rounded-lg px-3 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-salesforce-blue">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-200">
+                                    <th class="py-3.5 px-4">ឈ្មោះអតិថិជន</th>
+                                    <th class="py-3.5 px-4">ក្រុមហ៊ុន</th>
+                                    <th class="py-3.5 px-4">ពិន្ទុ AI Score</th>
+                                    <th class="py-3.5 px-4">ទំហំកិច្ចសន្យា</th>
+                                    <th class="py-3.5 px-4">កត្តាវិជ្ជមាន</th>
+                                    <th class="py-3.5 px-4">ហានិភ័យ</th>
+                                    <th class="py-3.5 px-4 text-right">សកម្មភាព</th>
+                                </tr>
+                            </thead>
+                            <tbody id="full-lead-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== VIEW: FORECASTING ===== -->
+            <div id="tab-forecasting" class="tab-content hidden space-y-6">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="mb-6">
+                        <h3 class="text-lg font-bold text-slate-800">Einstein Forecasting — ការទស្សន៍ទាយការលក់ជឿនលឿន</h3>
+                        <p class="text-xs text-slate-500">ព្យាករណ៍ចំណូលនាពេលអនាគត ផ្អែកលើទិន្នន័យជាក់ស្តែង និងសកម្មភាពបច្ចុប្បន្នរបស់ក្រុមលក់</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200"><span class="text-xs font-semibold text-slate-500">ការលក់ដែលបិទរួច (Closed Won)</span><h4 class="text-xl font-bold text-slate-800 mt-1">$95,000</h4></div>
+                        <div class="p-4 rounded-xl bg-blue-50 border border-blue-100"><span class="text-xs font-semibold text-salesforce-blue">ការទស្សន៍ទាយ AI បន្ថែម (AI Predicted)</span><h4 class="text-xl font-bold text-salesforce-blue mt-1">$89,500</h4></div>
+                        <div class="p-4 rounded-xl bg-indigo-50 border border-indigo-100"><span class="text-xs font-semibold text-indigo-700">សរុបព្យាករណ៍ (Total Forecast)</span><h4 class="text-xl font-bold text-indigo-700 mt-1">$184,500</h4></div>
+                    </div>
+                    <div class="h-80 relative"><canvas id="detailedForecastChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- ===== VIEW: OPPORTUNITY INSIGHTS ===== -->
+            <div id="tab-opportunity-insights" class="tab-content hidden space-y-6">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="mb-6">
+                        <h3 class="text-lg font-bold text-slate-800">Opportunity Insights — ការព្រមានជាមុន</h3>
+                        <p class="text-xs text-slate-500">ផ្តល់ការណែនាំ និងការព្រមាន ឧទាហរណ៍ ពេលឃើញថាការសន្ទនាជាមួយអតិថិជនស្ងប់ស្ងាត់ខុសធម្មតា</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="p-4 rounded-xl bg-rose-50 border border-rose-100"><span class="text-xs font-semibold text-rose-700">Deals ប្រឈមហានិភ័យ</span><h4 id="oi-count" class="text-xl font-bold text-rose-700 mt-1">0</h4></div>
+                        <div class="p-4 rounded-xl bg-amber-50 border border-amber-100"><span class="text-xs font-semibold text-amber-700">តម្លៃប្រឈមហានិភ័យ</span><h4 id="oi-value" class="text-xl font-bold text-amber-700 mt-1">$0</h4></div>
+                        <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-100"><span class="text-xs font-semibold text-emerald-700">បានដោះស្រាយថ្ងៃនេះ</span><h4 id="oi-resolved" class="text-xl font-bold text-emerald-700 mt-1">0</h4></div>
+                    </div>
+                    <div id="oi-list" class="space-y-4"></div>
+                </div>
+            </div>
+
+            <!-- ===== VIEW: ACTIVITY CAPTURE ===== -->
+            <div id="tab-activity-capture" class="tab-content hidden space-y-6">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">Einstein Activity Capture — កំណត់ត្រាសកម្មភាពស្វ័យប្រវត្តិ</h3>
+                            <p class="text-xs text-slate-500">កត់ត្រារាល់អ៊ីមែល និងការណាត់ជួបចូល CRM ដោយស្វ័យប្រវត្តិ ដោយមិនចាំបាច់វាយដោយដៃ</p>
+                        </div>
+                        <button onclick="simulateActivity()" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-xs font-semibold shadow-sm">
+                            <i class="fa-solid fa-envelope-circle-check"></i> ចាប់យកសកម្មភាពថ្មី
+                        </button>
+                    </div>
+                    <div class="relative border-l-2 border-slate-200 ml-4 space-y-6 py-2" id="activity-timeline"></div>
+                </div>
+            </div>
+
+            <!-- ===== VIEW: CUSTOMER STORE ===== -->
+            <div id="tab-store" class="tab-content hidden space-y-6">
+                <div class="bg-gradient-to-r from-salesforce-darkBlue to-salesforce-blue text-white p-6 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-xl font-bold"><i class="fa-solid fa-cart-shopping mr-2"></i>ហាង Einstein AI</h3>
+                        <p class="text-xs text-blue-100 mt-1">ជ្រើសរើសផលិតផល ហើយបញ្ជាទិញ — ម្ចាស់ហាងនឹងឃើញការបញ្ជាទិញរបស់អ្នកភ្លាមៗ</p>
+                    </div>
+                    <button id="open-store-window" onclick="openStoreWindow()" class="bg-white/15 hover:bg-white/25 border border-white/30 text-white px-4 py-2 rounded-lg text-xs font-semibold">
+                        <i class="fa-solid fa-up-right-from-square mr-1"></i> បើកក្នុងបង្អួចថ្មី (ទស្សនៈអតិថិជន)
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2">
+                        <div id="store-products" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                            <h4 class="font-bold text-slate-800 text-sm mb-2"><i class="fa-solid fa-basket-shopping text-salesforce-blue mr-1"></i> កន្ត្រករបស់ខ្ញុំ (<span id="cart-count">0</span>)</h4>
+                            <div id="cart-items"></div>
+                            <div class="flex items-center justify-between mt-3 pt-3 border-t border-slate-200">
+                                <span class="text-xs text-slate-500">សរុប</span>
+                                <span id="cart-total" class="text-lg font-bold text-slate-800">$0</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                            <h4 class="font-bold text-slate-800 text-sm">ព័ត៌មានអ្នកទិញ</h4>
+                            <input id="cust-name" maxlength="60" placeholder="ឈ្មោះ *" class="w-full text-xs border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-salesforce-blue">
+                            <input id="cust-company" maxlength="60" placeholder="ក្រុមហ៊ុន" class="w-full text-xs border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-salesforce-blue">
+                            <input id="cust-phone" maxlength="20" placeholder="លេខទូរស័ព្ទ *" class="w-full text-xs border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-salesforce-blue">
+                            <input id="cust-email" maxlength="80" placeholder="អ៊ីមែល" class="w-full text-xs border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-salesforce-blue">
+                            <select id="cust-payment" class="w-full text-xs border border-slate-300 rounded-lg px-3 py-2">
+                                <option>KHQR / ABA Pay</option>
+                                <option>ផ្ទេរប្រាក់តាមធនាគារ (Bank Transfer)</option>
+                                <option>បង់ពេលទទួល (Pay on Delivery)</option>
+                            </select>
+                            <p class="text-[10px] text-slate-400">* ការទូទាត់ជាការសាកល្បង (Demo) — មិនមានការកាត់ប្រាក់ពិត ហើយកុំបញ្ចូលព័ត៌មានកាតធនាគារ។</p>
+                            <p id="store-msg" class="text-xs hidden"></p>
+                            <button onclick="placeOrder()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 rounded-lg shadow-sm">
+                                <i class="fa-solid fa-bag-shopping mr-1"></i> ទិញឥឡូវ (Place Order)
+                            </button>
+                        </div>
+
+                        <div id="store-confirm" class="hidden bg-emerald-50 border border-emerald-200 p-5 rounded-xl text-xs text-emerald-800"></div>
+
+                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                            <h4 class="font-bold text-slate-800 text-sm mb-2">តាមដានការបញ្ជាទិញ</h4>
+                            <div class="flex gap-2">
+                                <input id="track-id" placeholder="ORD-1001" class="flex-1 text-xs border border-slate-300 rounded-lg px-3 py-2">
+                                <button onclick="trackOrder()" class="bg-slate-900 text-white text-xs font-semibold px-3 rounded-lg">ពិនិត្យ</button>
+                            </div>
+                            <p id="track-result" class="text-xs text-slate-600 mt-2"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== VIEW: OWNER ORDERS ===== -->
+            <div id="tab-orders" class="tab-content hidden space-y-6">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">ការបញ្ជាទិញពីអតិថិជន (Owner / Developer View)</h3>
+                            <p class="text-xs text-slate-500 flex items-center gap-1.5 mt-1">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Live — កំពុងស្តាប់ការបញ្ជាទិញថ្មីពីហាង
+                            </p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="exportOrdersCsv()" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-salesforce-blue border border-blue-200"><i class="fa-solid fa-file-csv mr-1"></i> Export CSV</button>
+                            <button onclick="clearOrders()" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200"><i class="fa-solid fa-trash mr-1"></i> លុបទិន្នន័យ Demo</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="p-4 rounded-xl bg-blue-50 border border-blue-100"><span class="text-xs font-semibold text-salesforce-blue">ការបញ្ជាទិញសរុប</span><h4 id="ord-kpi-total" class="text-xl font-bold text-salesforce-blue mt-1">0</h4></div>
+                        <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-100"><span class="text-xs font-semibold text-emerald-700">ចំណូលសរុប</span><h4 id="ord-kpi-rev" class="text-xl font-bold text-emerald-700 mt-1">$0</h4></div>
+                        <div class="p-4 rounded-xl bg-amber-50 border border-amber-100"><span class="text-xs font-semibold text-amber-700">រង់ចាំដំណើរការ (ថ្មី)</span><h4 id="ord-kpi-pending" class="text-xl font-bold text-amber-700 mt-1">0</h4></div>
+                        <div class="p-4 rounded-xl bg-indigo-50 border border-indigo-100"><span class="text-xs font-semibold text-indigo-700">តម្លៃមធ្យម/ការបញ្ជាទិញ</span><h4 id="ord-kpi-avg" class="text-xl font-bold text-indigo-700 mt-1">$0</h4></div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-200">
+                                    <th class="py-3 px-4">លេខ / ម៉ោង</th>
+                                    <th class="py-3 px-4">អតិថិជន</th>
+                                    <th class="py-3 px-4">ទំនិញ</th>
+                                    <th class="py-3 px-4">សរុប</th>
+                                    <th class="py-3 px-4">ការទូទាត់</th>
+                                    <th class="py-3 px-4">ស្ថានភាព</th>
+                                    <th class="py-3 px-4 text-right">Dev</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-body" class="divide-y divide-slate-100 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <h4 class="font-bold text-slate-800 text-sm mb-3">ផលិតផលលក់ដាច់បំផុត</h4>
+                        <div id="top-products" class="space-y-2 text-xs"></div>
+                    </div>
+                    <div class="bg-slate-900 p-6 rounded-xl shadow-sm">
+                        <h4 class="font-bold text-white text-sm mb-3"><i class="fa-solid fa-code mr-1 text-emerald-400"></i> Developer: Order Payload (JSON)</h4>
+                        <pre id="order-json" class="text-[11px] text-emerald-300 overflow-auto max-h-64 whitespace-pre-wrap">ចុចប៊ូតុង { } ក្នុងតារាង ដើម្បីមើល JSON</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== VIEW: NEXT-BEST ACTIONS ===== -->
+            <div id="tab-next-action" class="tab-content hidden space-y-6">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="mb-6">
+                        <h3 class="text-lg font-bold text-slate-800">Next-Best Actions — អនុសាសន៍សកម្មភាពល្អបំផុត</h3>
+                        <p class="text-xs text-slate-500">គួរទូរស័ព្ទពេលណា · គួរផ្ញើគម្រោងតម្លៃអ្វី · គួរបញ្ចុះតម្លៃដើម្បីបិទការលក់</p>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 mb-5" id="na-filters">
+                        <button onclick="filterActions('all')" data-f="all" class="na-filter px-3 py-1.5 rounded-full text-xs font-semibold bg-salesforce-blue text-white">ទាំងអស់</button>
+                        <button onclick="filterActions('call')" data-f="call" class="na-filter px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">📞 ពេលទូរស័ព្ទ</button>
+                        <button onclick="filterActions('proposal')" data-f="proposal" class="na-filter px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">📄 គម្រោងតម្លៃ</button>
+                        <button onclick="filterActions('discount')" data-f="discount" class="na-filter px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">🏷️ ការបញ្ចុះតម្លៃ</button>
+                    </div>
+
+                    <div id="next-actions-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 text-base mb-1">ពេលវេលាល្អបំផុតក្នុងការទូរស័ព្ទ (Best Time to Call)</h3>
+                    <p class="text-xs text-slate-500 mb-4">AI វិភាគម៉ោងឆ្លើយតបរបស់អតិថិជនម្នាក់ៗ</p>
+                    <div id="call-times" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // ---------- DATA ----------
+        let leads = [
+            { id: 1, name: 'លោក ចាន់ សុភ័ក្ត្រ', company: 'ABA Bank', score: 94, dealValue: 45000, driver: 'បើកមើលអ៊ីមែល ៥ដង, អត្រាឆ្លើយតបលឿន', risk: 'គ្មានហានិភ័យកត់សម្គាល់' },
+            { id: 2, name: 'អ្នកស្រី កែវ សុខា', company: 'Chip Mong Group', score: 88, dealValue: 72000, driver: 'ចូលរួមប្រជុំ Demo គ្រប់ពេល', risk: 'ថវិកាត្រូវឆ្លងកាត់ក្រុមការងារហិរញ្ញវត្ថុ' },
+            { id: 3, name: 'លោក សុខ ជា', company: 'Sokimex Co.', score: 62, dealValue: 28000, driver: 'មានតម្រូវការលើប្រព័ន្ធស្វ័យប្រវត្តិ', risk: 'អវត្តមានឆ្លើយតបរយៈពេល ៧ថ្ងៃ' },
+            { id: 4, name: 'អ្នកស្រី ម៉េង ធីដា', company: 'Smart Axiata', score: 45, dealValue: 15000, driver: 'បានទាញយកឯកសារ Whitepaper', risk: 'ប្រកួតប្រជែងជាមួយគូប្រជែងផ្សេងទៀត' },
+            { id: 5, name: 'លោក ហេង ពិសិដ្ឋ', company: 'Cellcard', score: 91, dealValue: 50000, driver: 'ស្នើប្រកាសតម្លៃជាផ្លូវការ', risk: 'ត្រូវការការគាំទ្របច្ចេកទេសបន្ថែម' }
+        ];
+        const fmt = n => '$' + Number(n).toLocaleString('en-US');
+
+        let activities = [
+            { id: 1, type: 'email', title: 'បានផ្ញើគម្រោងតម្លៃប្រព័ន្ធ', client: 'លោក ចាន់ សុភ័ក្ត្រ (ABA Bank)', time: '២ ម៉ោងមុន', sentiment: 'Positive', sentimentText: 'វិជ្ជមាន (៨៩%)', detail: 'អតិថិជនបានឆ្លើយតបថា "សំណើនេះល្អខ្លាំង ខ្ញុំនឹងពិនិត្យជាមួយថ្នាក់ដឹកនាំថ្ងៃនេះ"' },
+            { id: 2, type: 'meeting', title: 'ជំនួបពិភាក្សាលើ Demo Product', client: 'អ្នកស្រី កែវ សុខា (Chip Mong)', time: '៥ ម៉ោងមុន', sentiment: 'Positive', sentimentText: 'វិជ្ជមាន (៩២%)', detail: 'ការប្រជុំរយៈពេល ៤៥ នាទី បានពិភាក្សាលើការប្ដូរតាមតម្រូវការ (Customization)' },
+            { id: 3, type: 'email', title: 'អ៊ីមែលរំលឹកការតាមដាន', client: 'លោក សុខ ជា (Sokimex)', time: '១ ថ្ងៃមុន', sentiment: 'Neutral', sentimentText: 'ធម្មតា (៥០%)', detail: 'ផ្ញើអ៊ីមែលតាមដានកិច្ចសន្យា មិនទាន់មានការឆ្លើយតបនៅឡើយ' }
+        ];
+
+        let nextActions = [
+            { id: 1, type: 'discount', title: 'ផ្ញើសំណើបញ្ចុះតម្លៃ ១០% សម្រាប់ ABA Bank', priority: 'High', description: 'AI បានដឹងថា ABA Bank ជិតដល់ថ្ងៃបិទថវិកាប្រចាំត្រីមាស។ ការបញ្ចុះ ១០% បង្កើនឱកាសបិទដល់ ៨៥%។', actionText: 'ផ្ញើសំណើបញ្ចុះតម្លៃ', icon: 'fa-percent' },
+            { id: 2, type: 'call', title: 'ទូរស័ព្ទទៅ Cellcard ថ្ងៃនេះម៉ោង ១០:០០', priority: 'High', description: 'លោក ហេង ពិសិដ្ឋ ឆ្លើយតបលឿនបំផុតនៅពេលព្រឹក ហើយក្រុមបច្ចេកទេសស្នើពិនិត្យ Security Standards។', actionText: 'កំណត់ការហៅទូរស័ព្ទ', icon: 'fa-phone' },
+            { id: 3, type: 'proposal', title: 'ផ្ញើគម្រោងតម្លៃកញ្ចប់ Enterprise ជូន Chip Mong', priority: 'High', description: 'ផ្អែកលើ Demo និងទំហំក្រុមហ៊ុន កញ្ចប់ Enterprise ត្រូវនឹងតម្រូវការជាងកញ្ចប់ Standard។', actionText: 'ផ្ញើគម្រោងតម្លៃ', icon: 'fa-file-invoice-dollar' },
+            { id: 4, type: 'proposal', title: 'ផ្ញើឯកសារ Case Study ជូន Sokimex', priority: 'Medium', description: 'បង្កើនទំនុកចិត្តតាមរយៈការបង្ហាញគំរូជោគជ័យពីមុន។', actionText: 'ផ្ញើ Case Study', icon: 'fa-file-lines' },
+            { id: 5, type: 'call', title: 'ទូរស័ព្ទតាមដាន Sokimex ថ្ងៃស្អែកម៉ោង ១៤:០០', priority: 'Medium', description: 'ស្ងាត់ ៧ ថ្ងៃ — AI ឃើញថាអតិថិជននេះឆ្លើយតបល្អបំផុតនៅរសៀលថ្ងៃអង្គារ-ពុធ។', actionText: 'កំណត់ការហៅទូរស័ព្ទ', icon: 'fa-phone-volume' },
+            { id: 6, type: 'discount', title: 'ផ្តល់ការបញ្ចុះតម្លៃ ៥% ជូន Smart Axiata', priority: 'Low', description: 'មានគូប្រជែង — ការបញ្ចុះតិចតួចជាមួយកិច្ចសន្យា ១២ ខែ អាចធ្វើឱ្យអតិថិជនសម្រេចចិត្ត។', actionText: 'ផ្ញើសំណើ ៥%', icon: 'fa-tags' }
+        ];
+        let doneActions = new Set();
+        let actionFilter = 'all';
+
+        let callTimes = [
+            { name: 'លោក ចាន់ សុភ័ក្ត្រ', company: 'ABA Bank', time: 'ព្រឹក ០៩:០០ – ១១:០០', reason: 'ឆ្លើយតបអ៊ីមែលក្នុង ២០ នាទី' },
+            { name: 'អ្នកស្រី កែវ សុខា', company: 'Chip Mong', time: 'រសៀល ១៤:០០ – ១៥:៣០', reason: 'ចូលប្រជុំរសៀលជាប្រចាំ' },
+            { name: 'លោក ហេង ពិសិដ្ឋ', company: 'Cellcard', time: 'ព្រឹក ១០:០០ – ១១:៣០', reason: 'ទទួលទូរស័ព្ទបានច្រើនបំផុត' }
+        ];
+
+        let sources = [
+            { id: 'crm', name: 'Salesforce CRM', desc: 'Accounts · Contacts · Opportunities', icon: 'fa-cloud', color: 'blue', records: 4820, on: true },
+            { id: 'email', name: 'អ៊ីមែល (Email)', desc: 'Gmail / Outlook ទំនាក់ទំនងអតិថិជន', icon: 'fa-envelope', color: 'indigo', records: 3150, on: true },
+            { id: 'history', name: 'ប្រវត្តិទំនាក់ទំនង & ទិញ-លក់', desc: 'Orders · Invoices · Cases', icon: 'fa-clock-rotate-left', color: 'emerald', records: 2740, on: true },
+            { id: 'calendar', name: 'ប្រតិទិន (Calendar)', desc: 'ការណាត់ជួប · កិច្ចប្រជុំ', icon: 'fa-calendar-days', color: 'amber', records: 960, on: true },
+            { id: 'social', name: 'បណ្តាញសង្គម', desc: 'LinkedIn · Facebook · Telegram', icon: 'fa-share-nodes', color: 'purple', records: 1120, on: false },
+            { id: 'market', name: 'ទិន្នន័យទីផ្សារ', desc: 'ព័ត៌មានក្រុមហ៊ុន · Industry Data', icon: 'fa-globe', color: 'rose', records: 690, on: false }
+        ];
+        const lastSync = {};
+
+        let oppInsights = [
+            { id: 1, deal: 'Sokimex — ប្រព័ន្ធស្វ័យប្រវត្តិ', value: 28000, silent: 7, level: 'High', msg: 'អតិថិជនមិនបានឆ្លើយតបរយៈពេល ៧ ថ្ងៃ ខុសពីធម្មតា (មធ្យម ១.៥ ថ្ងៃ)។', suggest: 'ផ្ញើសាររំលឹកខ្លី និងស្នើណាត់ទូរស័ព្ទ ១៥ នាទី', resolved: false },
+            { id: 2, deal: 'Smart Axiata — Whitepaper Lead', value: 15000, silent: 4, level: 'Medium', msg: 'បានទាញយកឯកសារ ប៉ុន្តែមិនបើកអ៊ីមែលតាមដាន ២ ដងជាប់គ្នា។', suggest: 'ផ្ញើ Case Study ពាក់ព័ន្ធឧស្សាហកម្មទូរគមនាគមន៍', resolved: false },
+            { id: 3, deal: 'Chip Mong — Enterprise', value: 72000, silent: 3, level: 'Medium', msg: 'ថវិកាកំពុងរង់ចាំក្រុមហិរញ្ញវត្ថុ ហើយ Champion មិនបានឆ្លើយតប ៣ ថ្ងៃ។', suggest: 'ស្នើជួបជាមួយអ្នកសម្រេចចិត្តផ្នែកហិរញ្ញវត្ថុ', resolved: false }
+        ];
+
+        const factors = [
+            { label: 'ឆ្លើយតបអ៊ីមែល < ២៤ម៉ោង', v: 32 }, { label: 'ចូលរួម Demo', v: 27 },
+            { label: 'មានអ្នកឧបត្ថម្ភជាន់ខ្ពស់', v: 21 }, { label: 'ស្នើតម្លៃជាផ្លូវការ', v: 18 },
+            { label: 'ថវិកាមិនទាន់អនុម័ត', v: -19 }, { label: 'អ្នកសម្រេចចិត្តច្រើន', v: -11 },
+            { label: 'មានគូប្រជែង', v: -22 }, { label: 'ស្ងាត់ ៧+ ថ្ងៃ', v: -29 }
+        ];
+
+        const forecastSets = {
+            all:    [62000, 75000],
+            high:   [41000, 50000],
+            medium: [21000, 25000]
+        };
+
+        let forecastChart = null, detailedChart = null, factorChart = null;
+
+        // ---------- INIT ----------
+        window.onload = function () {
+            renderLeads(); renderActivities(); renderNextActions(); renderCallTimes();
+            renderSources(); renderOpp(); initCharts(); renderStore(); initOrderSync();
+        };
+
+        // ---------- NAV ----------
+        const titles = {
+            'dashboard': 'ផ្ទាំងគ្រប់គ្រង Salesforce Einstein AI',
+            'data-integration': 'ការប្រមូល និងភ្ជាប់ទិន្នន័យ (Data Integration)',
+            'ml-analysis': 'ការវិភាគ និងរៀនសូត្រ (Machine Learning)',
+            'lead-scoring': 'ប្រព័ន្ធវាយតម្លៃពិន្ទុអតិថិជន (Lead Scoring)',
+            'forecasting': 'ការទស្សន៍ទាយការលក់ (Einstein Forecasting)',
+            'opportunity-insights': 'ការព្រមានជាមុន (Opportunity Insights)',
+            'activity-capture': 'កំណត់ត្រាសកម្មភាពស្វ័យប្រវត្តិ (Activity Capture)',
+            'next-action': 'អនុសាសន៍សកម្មភាពល្អបំផុត (Next-Best Actions)',
+            'orders': 'ការបញ្ជាទិញពីអតិថិជន (Owner Orders)',
+            'store': 'ហាងអតិថិជន (Customer Store)'
+        };
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('bg-salesforce-blue', 'text-white'); el.classList.add('text-slate-300');
+            });
+            const nav = document.getElementById('nav-' + tabId);
+            if (nav) { nav.classList.add('bg-salesforce-blue', 'text-white'); nav.classList.remove('text-slate-300'); }
+            document.getElementById('page-title').innerText = titles[tabId] || 'Einstein AI';
+            if (tabId === 'ml-analysis' && factorChart) factorChart.resize();
+            if (tabId === 'forecasting' && detailedChart) detailedChart.resize();
+        }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-ml-72'); }
+
+        // ---------- LEADS ----------
+        function getScoreBadgeClass(s) {
+            if (s >= 80) return 'bg-emerald-100 text-emerald-800 border border-emerald-300';
+            if (s >= 60) return 'bg-amber-100 text-amber-800 border border-amber-300';
+            return 'bg-rose-100 text-rose-800 border border-rose-300';
+        }
+        function leadRowFull(l) {
+            return `<tr class="hover:bg-slate-50 transition-colors">
+                <td class="py-3.5 px-4 font-semibold text-slate-800">${l.name}</td>
+                <td class="py-3.5 px-4 text-slate-600">${l.company}</td>
+                <td class="py-3.5 px-4"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${getScoreBadgeClass(l.score)}">${l.score} / 100</span></td>
+                <td class="py-3.5 px-4 font-semibold text-slate-700">${fmt(l.dealValue)}</td>
+                <td class="py-3.5 px-4 text-xs text-emerald-700 font-medium">${l.driver}</td>
+                <td class="py-3.5 px-4 text-xs text-rose-600">${l.risk}</td>
+                <td class="py-3.5 px-4 text-right space-x-1">
+                    <button onclick="actionToast('បានផ្ញើអ៊ីមែលទៅ ${l.name}')" class="px-2.5 py-1.5 bg-blue-50 text-salesforce-blue hover:bg-blue-100 rounded text-xs font-medium">អ៊ីមែល</button>
+                    <button onclick="actionToast('បានបង្កើតកាលវិភាគជាមួយ ${l.name}')" class="px-2.5 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded text-xs font-medium">ណាត់ជួប</button>
+                </td></tr>`;
+        }
+        function renderLeads() {
+            const sorted = [...leads].sort((a, b) => b.score - a.score);
+            const dash = document.getElementById('dashboard-lead-table-body');
+            dash.innerHTML = sorted.slice(0, 3).map(l => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="py-3 px-4 font-semibold text-slate-800">${l.name}<br><span class="text-xs text-slate-500 font-normal">${l.company}</span></td>
+                    <td class="py-3 px-4"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${getScoreBadgeClass(l.score)}">${l.score} / 100</span></td>
+                    <td class="py-3 px-4 text-xs text-emerald-700 font-medium">${l.driver}</td>
+                    <td class="py-3 px-4 text-xs text-slate-500">${l.risk}</td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="actionToast('បានផ្ញើអ៊ីមែលទៅកាន់ ${l.name}')" class="p-1.5 text-slate-500 hover:text-salesforce-blue"><i class="fa-regular fa-envelope"></i></button>
+                        <button onclick="actionToast('បានបំប្លែង ${l.name} ទៅជា Opportunity')" class="p-1.5 text-slate-500 hover:text-emerald-600"><i class="fa-solid fa-arrows-spin"></i></button>
+                    </td></tr>`).join('');
+            filterLeads();
+            const avg = Math.round(leads.reduce((s, l) => s + l.score, 0) / leads.length);
+            document.getElementById('avg-score').innerText = avg + ' / 100';
+        }
+        function filterLeads() {
+            const q = (document.getElementById('lead-search').value || '').toLowerCase();
+            const sort = document.getElementById('lead-sort').value;
+            let f = leads.filter(l => l.name.toLowerCase().includes(q) || l.company.toLowerCase().includes(q));
+            f.sort((a, b) => sort === 'value' ? b.dealValue - a.dealValue : b.score - a.score);
+            document.getElementById('full-lead-table-body').innerHTML = f.map(leadRowFull).join('');
+        }
+
+        // ---------- ACTIVITY ----------
+        function sentClass(s) {
+            return s === 'Positive' ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
+                 : s === 'Negative' ? 'text-rose-600 bg-rose-50 border-rose-200'
+                 : 'text-amber-600 bg-amber-50 border-amber-200';
+        }
+        function renderActivities() {
+            document.getElementById('activity-timeline').innerHTML = activities.map(a => `
+                <div class="relative pl-6">
+                    <div class="absolute -left-3 top-1 w-6 h-6 rounded-full bg-salesforce-blue text-white flex items-center justify-center text-xs shadow-sm">
+                        <i class="fa-solid ${a.type === 'email' ? 'fa-envelope' : 'fa-calendar'}"></i></div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <div class="flex items-center justify-between"><h4 class="font-bold text-slate-800 text-sm">${a.title}</h4><span class="text-[11px] text-slate-400">${a.time}</span></div>
+                        <p class="text-xs text-slate-600 mt-1">ជាមួយ៖ <span class="font-semibold text-slate-700">${a.client}</span></p>
+                        <div class="mt-2 text-xs bg-white p-2.5 rounded border border-slate-200 text-slate-600 italic">"${a.detail}"</div>
+                        <div class="mt-2 flex items-center gap-2">
+                            <span class="text-[11px] text-slate-500">ការវិភាគអារម្មណ៍ (AI Sentiment):</span>
+                            <span class="text-[11px] font-semibold px-2 py-0.5 rounded border ${sentClass(a.sentiment)}">${a.sentimentText}</span>
+                        </div>
+                    </div>
+                </div>`).join('');
+        }
+        function simulateActivity() {
+            const pool = [
+                { type: 'email', title: 'ទទួលអ៊ីមែលឆ្លើយតបពីអតិថិជន', client: 'លោក ហេង ពិសិដ្ឋ (Cellcard)', sentiment: 'Positive', sentimentText: 'វិជ្ជមាន (៩០%)', detail: 'សូមផ្ញើកិច្ចសន្យាសាកល្បងមកខ្ញុំ ក្រុមយើងចង់ចាប់ផ្តើមឆាប់' },
+                { type: 'meeting', title: 'កិច្ចប្រជុំតាមដានតម្លៃ', client: 'អ្នកស្រី ម៉េង ធីដា (Smart Axiata)', sentiment: 'Negative', sentimentText: 'អវិជ្ជមាន (៣៥%)', detail: 'អតិថិជនកំពុងប្រៀបធៀបតម្លៃជាមួយអ្នកផ្គត់ផ្គង់ម្នាក់ទៀត' },
+                { type: 'email', title: 'សំណួរអំពីការដំឡើងប្រព័ន្ធ', client: 'លោក ចាន់ សុភ័ក្ត្រ (ABA Bank)', sentiment: 'Neutral', sentimentText: 'ធម្មតា (៦០%)', detail: 'តើការដំឡើងប្រើពេលប៉ុន្មានសប្តាហ៍?' }
+            ];
+            const p = pool[Math.floor(Math.random() * pool.length)];
+            activities.unshift({ id: Date.now(), time: 'ទើបតែឥឡូវ', ...p });
+            renderActivities();
+            actionToast('Einstein បានកត់ត្រាសកម្មភាពថ្មីចូល CRM ដោយស្វ័យប្រវត្តិ');
+        }
+
+        // ---------- NEXT-BEST ----------
+        const typeLabel = { call: '📞 ទូរស័ព្ទ', proposal: '📄 គម្រោងតម្លៃ', discount: '🏷️ បញ្ចុះតម្លៃ' };
+        const prioLabel = { High: ['អាទិភាពខ្ពស់', 'bg-rose-100 text-rose-800'], Medium: ['អាទិភាពមធ្យម', 'bg-amber-100 text-amber-800'], Low: ['អាទិភាពទាប', 'bg-slate-100 text-slate-700'] };
+        function renderNextActions() {
+            const list = nextActions.filter(a => actionFilter === 'all' || a.type === actionFilter);
+            document.getElementById('next-actions-list').innerHTML = list.map(a => {
+                const done = doneActions.has(a.id);
+                return `<div class="bg-white p-5 rounded-xl border ${done ? 'border-emerald-300 bg-emerald-50/40' : 'border-slate-200'} shadow-sm flex flex-col justify-between hover:border-indigo-300 transition-all">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center"><i class="fa-solid ${a.icon}"></i></span>
+                            <div class="flex gap-1.5">
+                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">${typeLabel[a.type]}</span>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded ${prioLabel[a.priority][1]}">${prioLabel[a.priority][0]}</span>
+                            </div>
+                        </div>
+                        <h4 class="font-bold text-slate-800 text-base mb-1">${a.title}</h4>
+                        <p class="text-xs text-slate-500 mb-4 leading-relaxed">${a.description}</p>
+                    </div>
+                    <button ${done ? 'disabled' : ''} onclick="doAction(${a.id})" class="w-full ${done ? 'bg-emerald-600 cursor-default' : 'bg-slate-900 hover:bg-slate-800'} text-white text-xs font-semibold py-2 px-3 rounded-lg transition-all">
+                        ${done ? '<i class="fa-solid fa-check mr-1"></i> បានអនុវត្តរួច' : a.actionText}
+                    </button>
+                </div>`;
+            }).join('') || '<p class="text-xs text-slate-500">មិនមានអនុសាសន៍</p>';
+        }
+        function filterActions(f) {
+            actionFilter = f;
+            document.querySelectorAll('.na-filter').forEach(b => {
+                const on = b.dataset.f === f;
+                b.className = 'na-filter px-3 py-1.5 rounded-full text-xs font-semibold ' + (on ? 'bg-salesforce-blue text-white' : 'bg-slate-100 text-slate-700');
+            });
+            renderNextActions();
+        }
+        function doAction(id) {
+            const a = nextActions.find(x => x.id === id);
+            doneActions.add(id); renderNextActions();
+            actionToast('បានអនុវត្តសកម្មភាព៖ ' + a.title);
+        }
+        function renderCallTimes() {
+            document.getElementById('call-times').innerHTML = callTimes.map(c => `
+                <div class="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                    <p class="font-semibold text-sm text-slate-800">${c.name}</p>
+                    <p class="text-xs text-slate-500">${c.company}</p>
+                    <p class="mt-2 text-sm font-bold text-salesforce-blue"><i class="fa-regular fa-clock mr-1"></i>${c.time}</p>
+                    <p class="text-xs text-slate-500 mt-1">${c.reason}</p>
+                </div>`).join('');
+        }
+
+        // ---------- DATA INTEGRATION ----------
+        const colorMap = { blue: 'bg-blue-50 text-blue-600', indigo: 'bg-indigo-50 text-indigo-600', emerald: 'bg-emerald-50 text-emerald-600', amber: 'bg-amber-50 text-amber-600', purple: 'bg-purple-50 text-purple-600', rose: 'bg-rose-50 text-rose-600' };
+        function nowStr() { return new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); }
+        function renderSources() {
+            document.getElementById('data-sources').innerHTML = sources.map(s => `
+                <div class="p-4 rounded-xl border ${s.on ? 'border-slate-200' : 'border-dashed border-slate-300 opacity-80'} bg-white">
+                    <div class="flex items-start justify-between">
+                        <div class="w-10 h-10 rounded-lg ${colorMap[s.color]} flex items-center justify-center"><i class="fa-solid ${s.icon}"></i></div>
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full ${s.on ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}">${s.on ? 'ភ្ជាប់រួច' : 'មិនទាន់ភ្ជាប់'}</span>
+                    </div>
+                    <h4 class="font-bold text-sm text-slate-800 mt-3">${s.name}</h4>
+                    <p class="text-xs text-slate-500">${s.desc}</p>
+                    <div class="mt-3 flex items-center justify-between text-xs text-slate-600">
+                        <span><b id="rec-${s.id}">${s.on ? s.records.toLocaleString() : '—'}</b> កំណត់ត្រា</span>
+                        <span class="text-slate-400">${lastSync[s.id] ? 'Sync ' + lastSync[s.id] : ''}</span>
+                    </div>
+                    <div class="mt-3 flex gap-2">
+                        <button onclick="toggleSource('${s.id}')" class="flex-1 text-xs font-semibold py-1.5 rounded-lg ${s.on ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-salesforce-blue hover:bg-blue-700 text-white'}">${s.on ? 'ផ្តាច់' : 'ភ្ជាប់'}</button>
+                        ${s.on ? `<button onclick="syncSource('${s.id}')" class="flex-1 text-xs font-semibold py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-salesforce-blue"><i class="fa-solid fa-rotate mr-1"></i>Sync</button>` : ''}
+                    </div>
+                </div>`).join('');
+            const on = sources.filter(s => s.on);
+            document.getElementById('total-records').innerText = on.reduce((t, s) => t + s.records, 0).toLocaleString();
+            document.getElementById('connected-count').innerText = on.length + ' / ' + sources.length;
+            document.getElementById('data-quality').innerText = (92 + on.length) + '%';
+        }
+        function toggleSource(id) {
+            const s = sources.find(x => x.id === id);
+            s.on = !s.on;
+            if (s.on) lastSync[id] = nowStr();
+            renderSources();
+            actionToast((s.on ? 'បានភ្ជាប់ ' : 'បានផ្តាច់ ') + s.name);
+        }
+        function syncSource(id) {
+            const s = sources.find(x => x.id === id);
+            const add = Math.floor(Math.random() * 120) + 20;
+            s.records += add; lastSync[id] = nowStr();
+            document.getElementById('last-sync-all').innerText = lastSync[id];
+            renderSources();
+            actionToast(`Sync ${s.name} រួចរាល់ (+${add} កំណត់ត្រា)`);
+        }
+        function syncAllSources() {
+            actionToast('កំពុងធ្វើសមកាលកម្មប្រភពទាំងអស់...');
+            setTimeout(() => {
+                sources.filter(s => s.on).forEach(s => { s.records += Math.floor(Math.random() * 120) + 20; lastSync[s.id] = nowStr(); });
+                document.getElementById('last-sync-all').innerText = nowStr();
+                renderSources();
+                actionToast('ធ្វើសមកាលកម្មទាំងអស់បានជោគជ័យ!');
+            }, 1000);
+        }
+
+        // ---------- MACHINE LEARNING ----------
+        function retrainModel() {
+            const btn = document.getElementById('retrain-btn');
+            btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> កំពុងបង្រៀន...';
+            actionToast('Einstein កំពុងបង្រៀនម៉ូដែលឡើងវិញពីទិន្នន័យថ្មី...');
+            setTimeout(() => {
+                const acc = (87 + Math.random() * 3).toFixed(1);
+                document.getElementById('ml-accuracy').innerText = acc + '%';
+                document.getElementById('ml-deals').innerText = (12480 + Math.floor(Math.random() * 300)).toLocaleString();
+                document.getElementById('ml-trained').innerText = 'ទើបតែឥឡូវ (' + nowStr() + ')';
+                factors.forEach(f => { f.v = Math.round(f.v + (Math.random() * 4 - 2)); });
+                factorChart.data.datasets[0].data = factors.map(f => f.v);
+                factorChart.update();
+                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-graduation-cap"></i> បង្រៀនម៉ូដែលឡើងវិញ (Retrain)';
+                actionToast('បង្រៀនម៉ូដែលរួចរាល់ — ភាពត្រឹមត្រូវ ' + acc + '%');
+            }, 1800);
+        }
+
+        // ---------- OPPORTUNITY INSIGHTS ----------
+        function renderOpp() {
+            const open = oppInsights.filter(o => !o.resolved);
+            document.getElementById('oi-count').innerText = open.length;
+            document.getElementById('oi-value').innerText = fmt(open.reduce((s, o) => s + o.value, 0));
+            document.getElementById('oi-resolved').innerText = oppInsights.length - open.length;
+            document.getElementById('risk-badge').innerText = open.length;
+            const lv = { High: ['ហានិភ័យខ្ពស់', 'bg-rose-100 text-rose-800 border-rose-300'], Medium: ['ហានិភ័យមធ្យម', 'bg-amber-100 text-amber-800 border-amber-300'] };
+            document.getElementById('oi-list').innerHTML = oppInsights.map(o => `
+                <div class="p-4 rounded-xl border ${o.resolved ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-200 bg-white'} flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="flex flex-wrap items-center gap-2 mb-1">
+                            <h4 class="font-bold text-sm text-slate-800">${o.deal}</h4>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${lv[o.level][1]}">${lv[o.level][0]}</span>
+                            <span class="text-xs font-semibold text-slate-600">${fmt(o.value)}</span>
+                        </div>
+                        <p class="text-xs text-slate-600"><i class="fa-solid fa-volume-xmark text-slate-400 mr-1"></i>ស្ងាត់ ${o.silent} ថ្ងៃ · ${o.msg}</p>
+                        <p class="text-xs text-indigo-700 mt-1"><i class="fa-solid fa-lightbulb mr-1"></i>ណែនាំ៖ ${o.suggest}</p>
+                    </div>
+                    <button ${o.resolved ? 'disabled' : ''} onclick="resolveOpp(${o.id})" class="shrink-0 text-xs font-semibold px-4 py-2 rounded-lg ${o.resolved ? 'bg-emerald-600 text-white cursor-default' : 'bg-salesforce-blue hover:bg-blue-700 text-white'}">
+                        ${o.resolved ? '<i class="fa-solid fa-check mr-1"></i> បានផ្ញើរួច' : '<i class="fa-solid fa-paper-plane mr-1"></i> ផ្ញើសាររំលឹក'}
+                    </button>
+                </div>`).join('');
+        }
+        function resolveOpp(id) {
+            const o = oppInsights.find(x => x.id === id);
+            o.resolved = true; renderOpp();
+            actionToast('បានផ្ញើសាររំលឹកសម្រាប់ ' + o.deal);
+        }
+
+        // ---------- CHARTS ----------
+        function initCharts() {
+            forecastChart = new Chart(document.getElementById('salesForecastChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: ['មករា', 'កុម្ភៈ', 'មីនា', 'មេសា', 'ឧសភា', 'មិថុនា'],
+                    datasets: [
+                        { label: 'ការលក់ជាក់ស្តែង (Actual)', data: [35000, 42000, 58000, 48000, null, null], borderColor: '#0176D3', backgroundColor: 'rgba(1,118,211,0.1)', fill: true, tension: 0.3 },
+                        { label: 'ការទស្សន៍ទាយ AI (Forecast)', data: [35000, 42000, 58000, 48000, ...forecastSets.all], borderColor: '#7F56D9', borderDash: [5, 5], backgroundColor: 'transparent', tension: 0.3 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            detailedChart = new Chart(document.getElementById('detailedForecastChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                    datasets: [
+                        { label: 'កិច្ចសន្យាបានបិទ (Closed Won)', data: [95000, 80000, 0, 0], backgroundColor: '#2E844A' },
+                        { label: 'ព្យាករណ៍បន្ថែម (AI Predicted)', data: [15000, 45000, 110000, 130000], backgroundColor: '#1B96FF' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            factorChart = new Chart(document.getElementById('factorChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: factors.map(f => f.label),
+                    datasets: [{ label: 'ផលប៉ះពាល់ (%)', data: factors.map(f => f.v), backgroundColor: ctx => (ctx.raw ?? 0) >= 0 ? '#2E844A' : '#EA001E' }]
+                },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        }
+
+        function updateForecastChart() {
+            const k = document.getElementById('forecast-filter').value;
+            forecastChart.data.datasets[1].data = [35000, 42000, 58000, 48000, ...forecastSets[k]];
+            forecastChart.update();
+            actionToast('តម្រងទិន្នន័យ Chart ត្រូវបានធ្វើបច្ចុប្បន្នភាព');
+        }
+
+        // ---------- STORE & ORDERS ----------
+        const STORE_MODE = new URLSearchParams(location.search).get('store') === '1';
+        const ORDERS_KEY = 'einstein_orders_v1';
+        const products = [
+            { id: 'p1', name: 'Einstein Lead Scoring', desc: 'ផ្តល់ពិន្ទុ និងតម្រៀបអតិថិជនសក្ដានុពលដោយ AI', price: 1200, icon: 'fa-user-check', color: 'blue' },
+            { id: 'p2', name: 'Activity Capture Add-on', desc: 'កត់ត្រាអ៊ីមែល និងការណាត់ជួបចូល CRM ស្វ័យប្រវត្តិ', price: 800, icon: 'fa-bolt', color: 'amber' },
+            { id: 'p3', name: 'Einstein Forecasting Pro', desc: 'ទស្សន៍ទាយចំណូលការលក់ និងកត្តាហានិភ័យ', price: 2500, icon: 'fa-chart-line', color: 'indigo' },
+            { id: 'p4', name: 'Next-Best Action Pack', desc: 'អនុសាសន៍ពេលទូរស័ព្ទ គម្រោងតម្លៃ និងការបញ្ចុះតម្លៃ', price: 1500, icon: 'fa-wand-magic-sparkles', color: 'purple' },
+            { id: 'p5', name: 'Onboarding & Training', desc: 'បណ្តុះបណ្តាលក្រុមលក់ និងដំឡើងប្រព័ន្ធ', price: 600, icon: 'fa-chalkboard-user', color: 'emerald' },
+            { id: 'p6', name: 'Premium Support (12 ខែ)', desc: 'ជំនួយបច្ចេកទេសអាទិភាព ២៤/៧', price: 900, icon: 'fa-headset', color: 'rose' }
+        ];
+        const statusList = ['ថ្មី', 'បានទូទាត់', 'កំពុងដឹកជញ្ជូន', 'បញ្ចប់', 'បោះបង់'];
+        const statusColor = { 'ថ្មី': 'bg-amber-100 text-amber-800', 'បានទូទាត់': 'bg-blue-100 text-blue-800', 'កំពុងដឹកជញ្ជូន': 'bg-indigo-100 text-indigo-800', 'បញ្ចប់': 'bg-emerald-100 text-emerald-800', 'បោះបង់': 'bg-slate-200 text-slate-600' };
+        let cart = {};
+        let orders = [];
+        let knownOrderIds = new Set();
+        let autoLogged = 1248;
+
+        const clean = (s, max = 60) => String(s == null ? '' : s).replace(/[<>"'`\\&]/g, '').trim().slice(0, max);
+        const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const val = id => document.getElementById(id).value;
+        function loadOrders() { try { const a = JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+        function saveOrders(list) { localStorage.setItem(ORDERS_KEY, JSON.stringify(list)); }
+
+        function initOrderSync() {
+            if (STORE_MODE) {
+                document.getElementById('sidebar').classList.add('hidden');
+                document.querySelector('header').classList.add('hidden');
+                document.getElementById('open-store-window').classList.add('hidden');
+                document.title = 'Einstein AI Store';
+                switchTab('store');
+                return;
+            }
+            syncOrders(false);
+            window.addEventListener('storage', e => { if (e.key === ORDERS_KEY) syncOrders(true); });
+            setInterval(() => syncOrders(true), 2000);
+        }
+        function openStoreWindow() {
+            window.open(location.href.split('#')[0].split('?')[0] + '?store=1', '_blank');
+        }
+
+        function renderStore() {
+            document.getElementById('store-products').innerHTML = products.map(p => `
+                <div class="bg-white rounded-xl border border-slate-200 p-4 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+                    <div>
+                        <div class="w-10 h-10 rounded-lg ${colorMap[p.color]} flex items-center justify-center"><i class="fa-solid ${p.icon}"></i></div>
+                        <h4 class="font-bold text-sm text-slate-800 mt-3">${p.name}</h4>
+                        <p class="text-xs text-slate-500 mt-1">${p.desc}</p>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between">
+                        <span class="font-bold text-salesforce-blue">${fmt(p.price)}</span>
+                        <button onclick="addToCart('${p.id}')" class="bg-salesforce-blue hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg"><i class="fa-solid fa-plus mr-1"></i> ដាក់ក្នុងកន្ត្រក</button>
+                    </div>
+                </div>`).join('');
+            renderCart();
+        }
+        function addToCart(id) { cart[id] = (cart[id] || 0) + 1; renderCart(); }
+        function changeQty(id, d) { cart[id] = (cart[id] || 0) + d; if (cart[id] <= 0) delete cart[id]; renderCart(); }
+        function cartTotal() { return Object.entries(cart).reduce((t, [id, q]) => t + products.find(p => p.id === id).price * q, 0); }
+        function renderCart() {
+            const entries = Object.entries(cart);
+            document.getElementById('cart-items').innerHTML = entries.length ? entries.map(([id, q]) => {
+                const p = products.find(x => x.id === id);
+                return `<div class="flex items-center justify-between text-xs py-2 border-b border-slate-100">
+                    <div><p class="font-semibold text-slate-800">${p.name}</p><p class="text-slate-500">${fmt(p.price)} × ${q}</p></div>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="changeQty('${id}',-1)" class="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200">−</button>
+                        <span class="w-4 text-center font-semibold">${q}</span>
+                        <button onclick="changeQty('${id}',1)" class="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200">+</button>
+                    </div></div>`;
+            }).join('') : '<p class="text-xs text-slate-400 py-4 text-center">កន្ត្រកទទេ</p>';
+            document.getElementById('cart-total').innerText = fmt(cartTotal());
+            document.getElementById('cart-count').innerText = entries.reduce((t, [, q]) => t + q, 0);
+        }
+        function storeMsg(text, isError) {
+            const el = document.getElementById('store-msg');
+            el.className = 'text-xs ' + (isError ? 'text-rose-600' : 'text-emerald-600');
+            el.innerText = text;
+        }
+
+        function placeOrder() {
+            if (!Object.keys(cart).length) { storeMsg('សូមជ្រើសរើសផលិតផលមុន', true); return; }
+            const name = clean(val('cust-name')), phone = clean(val('cust-phone'), 20);
+            if (!name || !phone) { storeMsg('សូមបំពេញឈ្មោះ និងលេខទូរស័ព្ទ', true); return; }
+            const items = Object.entries(cart).map(([id, q]) => {
+                const p = products.find(x => x.id === id);
+                return { productId: id, name: p.name, unitPrice: p.price, qty: q, subtotal: p.price * q };
+            });
+            const total = items.reduce((t, i) => t + i.subtotal, 0);
+            const stored = loadOrders();
+            const seq = stored.length ? Math.max(...stored.map(o => o.seq || 0)) + 1 : 1001;
+            const order = {
+                id: 'ORD-' + seq, seq, createdAt: new Date().toISOString(),
+                customer: { name, company: clean(val('cust-company')), phone, email: clean(val('cust-email'), 80) },
+                items, total, currency: 'USD', payment: clean(val('cust-payment'), 60),
+                status: 'ថ្មី', source: STORE_MODE ? 'store-window' : 'store-tab'
+            };
+            stored.unshift(order);
+            try { saveOrders(stored); } catch (e) { storeMsg('មិនអាចរក្សាទុកការបញ្ជាទិញបាន', true); return; }
+            cart = {}; renderCart();
+            ['cust-name', 'cust-company', 'cust-phone', 'cust-email'].forEach(id => document.getElementById(id).value = '');
+            storeMsg('', false);
+            const c = document.getElementById('store-confirm');
+            c.classList.remove('hidden');
+            c.innerHTML = `<p class="font-bold text-sm"><i class="fa-solid fa-circle-check mr-1"></i> បញ្ជាទិញជោគជ័យ!</p>
+                <p class="mt-1">លេខបញ្ជាទិញ៖ <b>${esc(order.id)}</b> · សរុប <b>${fmt(total)}</b></p>
+                <p class="mt-1">ម្ចាស់ហាងបានទទួលការបញ្ជាទិញរបស់អ្នករួចហើយ។ ប្រើលេខខាងលើដើម្បីតាមដានស្ថានភាព។</p>`;
+            if (!STORE_MODE) syncOrders(true);
+        }
+        function trackOrder() {
+            const id = clean(val('track-id'), 20).toUpperCase();
+            const o = loadOrders().find(x => x.id === id);
+            document.getElementById('track-result').innerText = o
+                ? `${o.id}: ស្ថានភាព "${o.status}" · សរុប ${fmt(o.total)}`
+                : 'រកមិនឃើញលេខបញ្ជាទិញនេះទេ';
+        }
+
+        // ---- owner side ----
+        function syncOrders(notify) {
+            const stored = loadOrders();
+            stored.filter(o => !knownOrderIds.has(o.id)).reverse().forEach(o => {
+                knownOrderIds.add(o.id);
+                applyOrderEffects(o, notify);
+            });
+            orders = stored;
+            renderOrders();
+        }
+        function applyOrderEffects(o, notify) {
+            const name = clean(o.customer && o.customer.name) || 'អតិថិជន';
+            const company = clean(o.customer && o.customer.company) || '—';
+            const oid = clean(o.id, 20);
+            const total = Number(o.total) || 0;
+            const count = (o.items || []).reduce((t, i) => t + (Number(i.qty) || 0), 0);
+            leads.unshift({
+                id: 'ord-' + oid, name, company,
+                score: Math.min(98, 60 + Math.floor(total / 150)), dealValue: total,
+                driver: `ទិញតាមហាង ${count} ផលិតផល (${oid})`, risk: 'រង់ចាំបញ្ជាក់ការទូទាត់'
+            });
+            renderLeads();
+            activities.unshift({
+                id: 'ord-' + oid, fromOrder: true, type: 'email',
+                title: 'ទទួលបានការបញ្ជាទិញថ្មី ' + oid, client: name + ' (' + company + ')',
+                time: 'ទើបតែឥឡូវ', sentiment: 'Positive', sentimentText: 'វិជ្ជមាន (៩៥%)',
+                detail: `ទិញ ${count} ផលិតផល សរុប ${fmt(total)}`
+            });
+            renderActivities();
+            autoLogged++;
+            document.getElementById('auto-logged').innerText = autoLogged.toLocaleString();
+            if (notify) actionToast(`🛒 ការបញ្ជាទិញថ្មី ${oid} ពី ${name} — ${fmt(total)}`);
+        }
+        function renderOrders() {
+            const live = orders.filter(o => o.status !== 'បោះបង់');
+            const rev = live.reduce((t, o) => t + (Number(o.total) || 0), 0);
+            document.getElementById('ord-kpi-total').innerText = orders.length;
+            document.getElementById('ord-kpi-rev').innerText = fmt(rev);
+            document.getElementById('ord-kpi-pending').innerText = orders.filter(o => o.status === 'ថ្មី').length;
+            document.getElementById('ord-kpi-avg').innerText = fmt(live.length ? Math.round(rev / live.length) : 0);
+            document.getElementById('order-badge').innerText = orders.filter(o => o.status === 'ថ្មី').length;
+
+            document.getElementById('orders-body').innerHTML = orders.length ? orders.map(o => {
+                const cu = o.customer || {};
+                const itemsTxt = (o.items || []).map(i => `${esc(i.name)} ×${esc(i.qty)}`).join('<br>');
+                const st = statusList.includes(o.status) ? o.status : 'ថ្មី';
+                return `<tr class="hover:bg-slate-50 align-top">
+                    <td class="py-3 px-4"><b class="text-slate-800">${esc(o.id)}</b><br><span class="text-xs text-slate-400">${esc(new Date(o.createdAt).toLocaleString('en-GB'))}</span></td>
+                    <td class="py-3 px-4"><span class="font-semibold">${esc(cu.name)}</span><br><span class="text-xs text-slate-500">${esc(cu.company)} · ${esc(cu.phone)}</span></td>
+                    <td class="py-3 px-4 text-xs text-slate-600">${itemsTxt}</td>
+                    <td class="py-3 px-4 font-bold text-slate-800">${fmt(o.total)}</td>
+                    <td class="py-3 px-4 text-xs text-slate-600">${esc(o.payment)}</td>
+                    <td class="py-3 px-4">
+                        <select onchange="setOrderStatus('${esc(o.id)}', this.value)" class="text-xs rounded-lg px-2 py-1 border border-slate-300 ${statusColor[st]}">
+                            ${statusList.map(s => `<option ${s === st ? 'selected' : ''}>${s}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td class="py-3 px-4 text-right"><button onclick="showOrderJson('${esc(o.id)}')" class="px-2 py-1 rounded bg-slate-900 text-emerald-300 text-xs font-mono">{ }</button></td>
+                </tr>`;
+            }).join('') : '<tr><td colspan="7" class="py-8 text-center text-xs text-slate-400">មិនទាន់មានការបញ្ជាទិញ — សាកល្បងទិញក្នុង "ហាងអតិថិជន"</td></tr>';
+
+            const agg = {};
+            live.forEach(o => (o.items || []).forEach(i => { agg[i.name] = (agg[i.name] || 0) + (Number(i.qty) || 0); }));
+            const top = Object.entries(agg).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const max = top.length ? top[0][1] : 1;
+            document.getElementById('top-products').innerHTML = top.length ? top.map(([n, q]) => `
+                <div><div class="flex justify-between mb-1"><span class="font-medium text-slate-700">${esc(n)}</span><span class="text-slate-500">${q} ឯកតា</span></div>
+                <div class="h-2 bg-slate-100 rounded"><div class="h-2 rounded bg-salesforce-blue" style="width:${Math.round(q / max * 100)}%"></div></div></div>`).join('')
+                : '<p class="text-slate-400">មិនទាន់មានទិន្នន័យ</p>';
+        }
+        function setOrderStatus(id, status) {
+            if (!statusList.includes(status)) return;
+            const list = loadOrders();
+            const o = list.find(x => x.id === id);
+            if (!o) return;
+            o.status = status; saveOrders(list); orders = list; renderOrders();
+            actionToast(`${id} → ${status}`);
+        }
+        function showOrderJson(id) {
+            const o = orders.find(x => x.id === id);
+            document.getElementById('order-json').textContent = o ? JSON.stringify(o, null, 2) : 'រកមិនឃើញ';
+        }
+        function exportOrdersCsv() {
+            const cell = v => { let s = String(v == null ? '' : v); if (/^[=+\-@]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g, '""') + '"'; };
+            const rows = [['Order ID', 'Time', 'Customer', 'Company', 'Phone', 'Email', 'Items', 'Total USD', 'Payment', 'Status']];
+            orders.forEach(o => {
+                const cu = o.customer || {};
+                rows.push([o.id, o.createdAt, cu.name, cu.company, cu.phone, cu.email, (o.items || []).map(i => i.name + ' x' + i.qty).join('; '), o.total, o.payment, o.status]);
+            });
+            const csv = '\ufeff' + rows.map(r => r.map(cell).join(',')).join('\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+            a.download = 'orders.csv'; a.click();
+        }
+        function clearOrders() {
+            if (!confirm('លុបការបញ្ជាទិញ Demo ទាំងអស់?')) return;
+            try { localStorage.removeItem(ORDERS_KEY); } catch (e) {}
+            orders = []; knownOrderIds = new Set();
+            leads = leads.filter(l => !String(l.id).startsWith('ord-'));
+            activities = activities.filter(a => !a.fromOrder);
+            renderLeads(); renderActivities(); renderOrders();
+            actionToast('បានលុបទិន្នន័យ Demo');
+        }
+
+        // ---------- ACTIONS ----------
+        function runAiPrediction() {
+            actionToast('កំពុងដំណើរការ AI Model Scan លើទិន្នន័យទាំងអស់...');
+            setTimeout(() => {
+                leads.forEach(l => { l.score = Math.min(100, Math.max(30, l.score + Math.floor(Math.random() * 10 - 4))); });
+                renderLeads();
+                actionToast('ការវិភាគ AI ត្រូវបានធ្វើបច្ចុប្បន្នភាពជោគជ័យ!');
+            }, 1200);
+        }
+        function simulateNewLead() {
+            const names = ['លោក លី ម៉េង', 'អ្នកស្រី សុខ នីតា', 'លោក ចាន់ វីរៈ'];
+            const companies = ['Phnom Penh Commercial Bank', 'Canadia Bank', 'Chip Mong Retail'];
+            const n = names[Math.floor(Math.random() * names.length)], c = companies[Math.floor(Math.random() * companies.length)];
+            leads.unshift({
+                id: Date.now(), name: n, company: c,
+                score: Math.floor(Math.random() * 35) + 60,
+                dealValue: (Math.floor(Math.random() * 50) + 20) * 1000,
+                driver: 'ទើបតែចូលរួមសំណើសុំព័ត៌មាន (Inquiry Form)', risk: 'ត្រូវការការវិភាគបន្ថែម'
+            });
+            renderLeads();
+            actionToast(`បានបន្ថែម Lead ថ្មី៖ ${n} (${c})`);
+        }
+        function executeAction(type) {
+            actionToast(type === 'send-discount' ? 'បានផ្ញើលិខិតស្នើបញ្ចុះតម្លៃ 10% ទៅកាន់ ABA Bank រួចរាល់!' : 'បានកំណត់ការរំលឹកនៅពេលក្រោយ។');
+        }
+        function actionToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'bg-slate-900 text-white text-xs px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 transition-all duration-300 pointer-events-auto border border-slate-700';
+            toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 text-base"></i><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+    </script>
+</body>
+</html>
