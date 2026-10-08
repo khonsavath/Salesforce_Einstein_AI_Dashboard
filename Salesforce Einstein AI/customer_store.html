@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Einstein AI Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Khmer:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: { extend: {
+                colors: { salesforce: { blue: '#0176D3', darkBlue: '#032D60' } },
+                fontFamily: { sans: ['Noto Sans Khmer', 'Inter', 'sans-serif'] }
+            } }
+        }
+    </script>
+    <style>body { font-family: 'Noto Sans Khmer', 'Inter', sans-serif; background: #F3F5F9; }</style>
+</head>
+<body class="text-slate-800 antialiased">
+
+    <header class="bg-salesforce-darkBlue text-white">
+        <div class="max-w-6xl mx-auto px-6 py-5 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-500 to-indigo-400 flex items-center justify-center text-xl shadow-lg"><i class="fa-solid fa-brain"></i></div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight">ហាង Einstein AI</h1>
+                <p class="text-xs text-blue-200">ជ្រើសរើសផលិតផល ហើយបញ្ជាទិញ — ម្ចាស់ហាងនឹងទទួលបានការបញ្ជាទិញរបស់អ្នកភ្លាមៗ</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Products -->
+            <div class="lg:col-span-2">
+                <div id="store-products" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <!-- Cart & checkout -->
+            <div class="space-y-4">
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <h4 class="font-bold text-slate-800 text-sm mb-2"><i class="fa-solid fa-basket-shopping text-salesforce-blue mr-1"></i> កន្ត្រករបស់ខ្ញុំ (<span id="cart-count">0</span>)</h4>
+                    <div id="cart-items"></div>
+                    <div class="flex items-center justify-between mt-3 pt-3 border-t border-slate-200">
+                        <span class="text-xs text-slate-500">សរុប</span>
+                        <span id="cart-total" class="text-lg font-bold text-slate-800">$0</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <h4 class="font-bold text-slate-800 text-sm">ព័ត៌មានអ្នកទិញ</h4>
+                    <input id="cust-name" maxlength="60" placeholder="ឈ្មោះ *" class="w-full text-xs border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-salesforce-blue">
+                    <input id="cust-company" maxlength="60" placeholder="ក្រុមហ៊ុន" class="w-full text-xs border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-salesforce-blue">
+                    <input id="cust-phone" maxlength="20" placeholder="លេខទូរស័ព្ទ *" class="w-full text-xs border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-salesforce-blue">
+                    <input id="cust-email" maxlength="80" placeholder="អ៊ីមែល" class="w-full text-xs border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-salesforce-blue">
+                    <select id="cust-payment" class="w-full text-xs border border-slate-300 rounded-lg px-3 py-2">
+                        <option>KHQR / ABA Pay</option>
+                        <option>ផ្ទេរប្រាក់តាមធនាគារ (Bank Transfer)</option>
+                        <option>បង់ពេលទទួល (Pay on Delivery)</option>
+                    </select>
+                    <p class="text-[10px] text-slate-400">* ការទូទាត់ជាការសាកល្បង (Demo) — មិនមានការកាត់ប្រាក់ពិត ហើយកុំបញ្ចូលព័ត៌មានកាតធនាគារ។</p>
+                    <p id="store-msg" class="text-xs hidden"></p>
+                    <button onclick="placeOrder()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 rounded-lg shadow-sm">
+                        <i class="fa-solid fa-bag-shopping mr-1"></i> ទិញឥឡូវ (Place Order)
+                    </button>
+                </div>
+
+                <div id="store-confirm" class="hidden bg-emerald-50 border border-emerald-200 p-5 rounded-xl text-xs text-emerald-800"></div>
+
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <h4 class="font-bold text-slate-800 text-sm mb-2">តាមដានការបញ្ជាទិញ</h4>
+                    <div class="flex gap-2">
+                        <input id="track-id" placeholder="ORD-1001" class="flex-1 text-xs border border-slate-300 rounded-lg px-3 py-2">
+                        <button onclick="trackOrder()" class="bg-slate-900 text-white text-xs font-semibold px-3 rounded-lg">ពិនិត្យ</button>
+                    </div>
+                    <p id="track-result" class="text-xs text-slate-600 mt-2"></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // IMPORTANT: this key must match the Dashboard (Salesforce_Einstein_AI_Dashboard_v2.html)
+        const ORDERS_KEY = 'einstein_orders_v1';
+
+        const colorMap = { blue: 'bg-blue-50 text-blue-600', indigo: 'bg-indigo-50 text-indigo-600', emerald: 'bg-emerald-50 text-emerald-600', amber: 'bg-amber-50 text-amber-600', purple: 'bg-purple-50 text-purple-600', rose: 'bg-rose-50 text-rose-600' };
+        const products = [
+            { id: 'p1', name: 'Einstein Lead Scoring', desc: 'ផ្តល់ពិន្ទុ និងតម្រៀបអតិថិជនសក្ដានុពលដោយ AI', price: 1200, icon: 'fa-user-check', color: 'blue' },
+            { id: 'p2', name: 'Activity Capture Add-on', desc: 'កត់ត្រាអ៊ីមែល និងការណាត់ជួបចូល CRM ស្វ័យប្រវត្តិ', price: 800, icon: 'fa-bolt', color: 'amber' },
+            { id: 'p3', name: 'Einstein Forecasting Pro', desc: 'ទស្សន៍ទាយចំណូលការលក់ និងកត្តាហានិភ័យ', price: 2500, icon: 'fa-chart-line', color: 'indigo' },
+            { id: 'p4', name: 'Next-Best Action Pack', desc: 'អនុសាសន៍ពេលទូរស័ព្ទ គម្រោងតម្លៃ និងការបញ្ចុះតម្លៃ', price: 1500, icon: 'fa-wand-magic-sparkles', color: 'purple' },
+            { id: 'p5', name: 'Onboarding & Training', desc: 'បណ្តុះបណ្តាលក្រុមលក់ និងដំឡើងប្រព័ន្ធ', price: 600, icon: 'fa-chalkboard-user', color: 'emerald' },
+            { id: 'p6', name: 'Premium Support (12 ខែ)', desc: 'ជំនួយបច្ចេកទេសអាទិភាព ២៤/៧', price: 900, icon: 'fa-headset', color: 'rose' }
+        ];
+        let cart = {};
+
+        const fmt = n => '$' + Number(n).toLocaleString('en-US');
+        const clean = (s, max = 60) => String(s == null ? '' : s).replace(/[<>"'`\\&]/g, '').trim().slice(0, max);
+        const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const val = id => document.getElementById(id).value;
+        function loadOrders() { try { const a = JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+
+        function renderStore() {
+            document.getElementById('store-products').innerHTML = products.map(p => `
+                <div class="bg-white rounded-xl border border-slate-200 p-4 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+                    <div>
+                        <div class="w-10 h-10 rounded-lg ${colorMap[p.color]} flex items-center justify-center"><i class="fa-solid ${p.icon}"></i></div>
+                        <h4 class="font-bold text-sm text-slate-800 mt-3">${p.name}</h4>
+                        <p class="text-xs text-slate-500 mt-1">${p.desc}</p>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between">
+                        <span class="font-bold text-salesforce-blue">${fmt(p.price)}</span>
+                        <button onclick="addToCart('${p.id}')" class="bg-salesforce-blue hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg"><i class="fa-solid fa-plus mr-1"></i> ដាក់ក្នុងកន្ត្រក</button>
+                    </div>
+                </div>`).join('');
+            renderCart();
+        }
+        function addToCart(id) { cart[id] = (cart[id] || 0) + 1; renderCart(); }
+        function changeQty(id, d) { cart[id] = (cart[id] || 0) + d; if (cart[id] <= 0) delete cart[id]; renderCart(); }
+        function cartTotal() { return Object.entries(cart).reduce((t, [id, q]) => t + products.find(p => p.id === id).price * q, 0); }
+        function renderCart() {
+            const entries = Object.entries(cart);
+            document.getElementById('cart-items').innerHTML = entries.length ? entries.map(([id, q]) => {
+                const p = products.find(x => x.id === id);
+                return `<div class="flex items-center justify-between text-xs py-2 border-b border-slate-100">
+                    <div><p class="font-semibold text-slate-800">${p.name}</p><p class="text-slate-500">${fmt(p.price)} × ${q}</p></div>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="changeQty('${id}',-1)" class="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200">−</button>
+                        <span class="w-4 text-center font-semibold">${q}</span>
+                        <button onclick="changeQty('${id}',1)" class="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200">+</button>
+                    </div></div>`;
+            }).join('') : '<p class="text-xs text-slate-400 py-4 text-center">កន្ត្រកទទេ</p>';
+            document.getElementById('cart-total').innerText = fmt(cartTotal());
+            document.getElementById('cart-count').innerText = entries.reduce((t, [, q]) => t + q, 0);
+        }
+        function storeMsg(text, isError) {
+            const el = document.getElementById('store-msg');
+            el.className = 'text-xs ' + (isError ? 'text-rose-600' : 'text-emerald-600');
+            el.innerText = text;
+        }
+
+        function placeOrder() {
+            if (!Object.keys(cart).length) { storeMsg('សូមជ្រើសរើសផលិតផលមុន', true); return; }
+            const name = clean(val('cust-name')), phone = clean(val('cust-phone'), 20);
+            if (!name || !phone) { storeMsg('សូមបំពេញឈ្មោះ និងលេខទូរស័ព្ទ', true); return; }
+
+            const items = Object.entries(cart).map(([id, q]) => {
+                const p = products.find(x => x.id === id);
+                return { productId: id, name: p.name, unitPrice: p.price, qty: q, subtotal: p.price * q };
+            });
+            const total = items.reduce((t, i) => t + i.subtotal, 0);
+            const stored = loadOrders();
+            const seq = stored.length ? Math.max(...stored.map(o => o.seq || 0)) + 1 : 1001;
+            const order = {
+                id: 'ORD-' + seq, seq, createdAt: new Date().toISOString(),
+                customer: { name, company: clean(val('cust-company')), phone, email: clean(val('cust-email'), 80) },
+                items, total, currency: 'USD', payment: clean(val('cust-payment'), 60),
+                status: 'ថ្មី', source: 'store-page'
+            };
+            stored.unshift(order);
+            try { localStorage.setItem(ORDERS_KEY, JSON.stringify(stored)); }
+            catch (e) { storeMsg('មិនអាចរក្សាទុកការបញ្ជាទិញបាន (Browser បិទ Storage?)', true); return; }
+
+            cart = {}; renderCart();
+            ['cust-name', 'cust-company', 'cust-phone', 'cust-email'].forEach(id => document.getElementById(id).value = '');
+            storeMsg('', false);
+            const c = document.getElementById('store-confirm');
+            c.classList.remove('hidden');
+            c.innerHTML = `<p class="font-bold text-sm"><i class="fa-solid fa-circle-check mr-1"></i> បញ្ជាទិញជោគជ័យ!</p>
+                <p class="mt-1">លេខបញ្ជាទិញ៖ <b>${esc(order.id)}</b> · សរុប <b>${fmt(total)}</b></p>
+                <p class="mt-1">ម្ចាស់ហាងបានទទួលការបញ្ជាទិញរបស់អ្នករួចហើយ។ ប្រើលេខខាងលើដើម្បីតាមដានស្ថានភាព។</p>`;
+        }
+        function trackOrder() {
+            const id = clean(val('track-id'), 20).toUpperCase();
+            const o = loadOrders().find(x => x.id === id);
+            document.getElementById('track-result').innerText = o
+                ? `${o.id}: ស្ថានភាព "${o.status}" · សរុប ${fmt(o.total)}`
+                : 'រកមិនឃើញលេខបញ្ជាទិញនេះទេ';
+        }
+
+        renderStore();
+    </script>
+</body>
+</html>
